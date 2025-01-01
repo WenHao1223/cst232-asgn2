@@ -9,49 +9,7 @@
 using namespace std;
 using namespace std::chrono;
 
-const int REQ_SIZE = 20;
-const int HEAD = 50;
-const int DISK_SIZE = 200;
-
-void random_request(int req_list[])
-{
-    srand(time(0));
-
-    // generate random requests
-    for (int i = 0; i < REQ_SIZE; i++)
-    {
-        req_list[i] = rand() % DISK_SIZE;
-    }
-
-    // check if there are any duplicate requests
-    for (int i = 0; i < REQ_SIZE; i++)
-    {
-        for (int j = i + 1; j < REQ_SIZE; j++)
-        {
-            if (req_list[i] == req_list[j])
-            {
-                req_list[j] = rand() % DISK_SIZE;
-            }
-        }
-    }
-
-    // display the random requests
-    cout << "* RANDOM REQUESTS *" << endl;
-    cout << "List of random requests: [";
-    for (int i = 0; i < REQ_SIZE; i++)
-    {
-        cout << req_list[i];
-        if (i != REQ_SIZE - 1)
-        {
-            cout << ", ";
-        }
-    }
-    cout << "]" << endl;
-
-    cout << "-----------------" << endl;
-}
-
-void bubbleSort(int req_list[])
+void bubbleSort(int req_list[], const int REQ_SIZE)
 {
     for (int i = 0; i < REQ_SIZE - 1; i++)
     {
@@ -82,16 +40,16 @@ void bubbleSort(int req_list[])
     cout << "-----------------" << endl;
 }
 
-void C_SCAN(int req_list[], int req_fetched_seq[], int direction)
+void C_SCAN(int req_list[], int req_fetched_seq[], int direction, const int REQ_SIZE, const int DISK_SIZE, const int HEAD)
 {
     int head = HEAD;
     int total_seek_time = 0;
-    int worst_seek_time = 0; // in units
+    int worst_seek_time = 0;      // in units
     int best_seek_time = INT_MAX; // in units
     int index = 0;
 
     // Sort the request array
-    bubbleSort(req_list);
+    bubbleSort(req_list, REQ_SIZE);
 
     // Move towards the end of the disk in the given direction
     if (direction == 1) // right
@@ -104,8 +62,10 @@ void C_SCAN(int req_list[], int req_fetched_seq[], int direction)
                 int seek_time = abs(req_list[i] - head);
                 // cout << "Seek time: " << seek_time << endl;
                 total_seek_time += seek_time;
-                if (seek_time > worst_seek_time) worst_seek_time = seek_time;
-                if (seek_time < best_seek_time) best_seek_time = seek_time;
+                if (seek_time > worst_seek_time)
+                    worst_seek_time = seek_time;
+                if (seek_time < best_seek_time)
+                    best_seek_time = seek_time;
                 head = req_list[i];
             }
         }
@@ -114,7 +74,8 @@ void C_SCAN(int req_list[], int req_fetched_seq[], int direction)
         int repositioning_time = (DISK_SIZE - 1 - head) + (DISK_SIZE - 1);
         // cout << "Repositioning time (before): " << repositioning_time << endl;
         total_seek_time += repositioning_time;
-        if (repositioning_time > worst_seek_time) worst_seek_time = repositioning_time;
+        if (repositioning_time > worst_seek_time)
+            worst_seek_time = repositioning_time;
         head = 0;
 
         bool flag = false;
@@ -122,18 +83,22 @@ void C_SCAN(int req_list[], int req_fetched_seq[], int direction)
         {
             if (req_list[i] < HEAD)
             {
-                if (!flag) {
+                if (!flag)
+                {
                     repositioning_time += req_list[i];
                     // cout << "Repositioning time (after): " << repositioning_time << endl;
-                    if (repositioning_time > worst_seek_time) worst_seek_time = repositioning_time;
+                    if (repositioning_time > worst_seek_time)
+                        worst_seek_time = repositioning_time;
                     flag = true;
                 }
                 req_fetched_seq[index++] = req_list[i];
                 int seek_time = abs(req_list[i] - head);
                 // cout << "Seek time: " << seek_time << endl;
                 total_seek_time += seek_time;
-                if (seek_time > worst_seek_time) worst_seek_time = seek_time;
-                if (seek_time < best_seek_time) best_seek_time = seek_time;
+                if (seek_time > worst_seek_time)
+                    worst_seek_time = seek_time;
+                if (seek_time < best_seek_time)
+                    best_seek_time = seek_time;
                 head = req_list[i];
             }
         }
@@ -148,8 +113,10 @@ void C_SCAN(int req_list[], int req_fetched_seq[], int direction)
                 int seek_time = abs(req_list[i] - head);
                 // cout << "Seek time: " << seek_time << endl;
                 total_seek_time += seek_time;
-                if (seek_time > worst_seek_time) worst_seek_time = seek_time;
-                if (seek_time < best_seek_time) best_seek_time = seek_time;
+                if (seek_time > worst_seek_time)
+                    worst_seek_time = seek_time;
+                if (seek_time < best_seek_time)
+                    best_seek_time = seek_time;
                 head = req_list[i];
             }
         }
@@ -165,18 +132,22 @@ void C_SCAN(int req_list[], int req_fetched_seq[], int direction)
         {
             if (req_list[i] > HEAD)
             {
-                if (!flag) {
+                if (!flag)
+                {
                     repositioning_time += (DISK_SIZE - 1 - req_list[i]);
                     // cout << "Repositioning time (after): " << repositioning_time << endl;
-                    if (repositioning_time > worst_seek_time) worst_seek_time = repositioning_time;
+                    if (repositioning_time > worst_seek_time)
+                        worst_seek_time = repositioning_time;
                     flag = true;
                 }
                 req_fetched_seq[index++] = req_list[i];
                 int seek_time = abs(req_list[i] - head);
                 // cout << "Seek time: " << seek_time << endl;
                 total_seek_time += seek_time;
-                if (seek_time > worst_seek_time) worst_seek_time = seek_time;
-                if (seek_time < best_seek_time) best_seek_time = seek_time;
+                if (seek_time > worst_seek_time)
+                    worst_seek_time = seek_time;
+                if (seek_time < best_seek_time)
+                    best_seek_time = seek_time;
                 head = req_list[i];
             }
         }
@@ -219,12 +190,73 @@ void C_SCAN(int req_list[], int req_fetched_seq[], int direction)
 
 int main()
 {
-    int req_list[REQ_SIZE];
-    int req_fetched_seq[REQ_SIZE];
+    int HEAD;      // in units
+    int DISK_SIZE; // in units
+    int REQ_SIZE;  // in units
+
+    do
+    {
+        cout << "Enter the initial position of the disk head: ";
+        cin >> HEAD;
+        if (HEAD < 0)
+        {
+            cout << "Invalid head position. Please enter a non-negative number." << endl;
+        }
+    } while (HEAD < 0);
+
+    do
+    {
+        cout << "Enter the total number of cylinders on the disk: ";
+        cin >> DISK_SIZE;
+        if (DISK_SIZE <= 0)
+        {
+            cout << "Invalid disk size. Please enter a positive number." << endl;
+        }
+    } while (DISK_SIZE <= 0);
+
+    do
+    {
+        cout << "Enter the total number of requests: ";
+        cin >> REQ_SIZE;
+        if (REQ_SIZE <= 0)
+        {
+            cout << "Invalid request size. Please enter a positive number." << endl;
+        }
+    } while (REQ_SIZE <= 0);
+
+    int *req_list = new int[REQ_SIZE];
+    int *req_fetched_seq = new int[REQ_SIZE];
     int direction = 1; // 1 for right, 0 for left
 
-    random_request(req_list);
-    C_SCAN(req_list, req_fetched_seq, direction);
+    cout << "* Enter the request sequence *" << endl;
+    for (int i = 0; i < REQ_SIZE; i++)
+    {
+        // check if the request is within the disk's range and not a duplicate
+        bool is_duplicate;
+        do
+        {
+            is_duplicate = false;
+            cout << "Request " << i + 1 << ": ";
+            cin >> req_list[i];
+            if (req_list[i] < 0 || req_list[i] >= DISK_SIZE)
+            {
+                cout << "Invalid request. Please enter a request within the disk's range." << endl;
+            }
+            for (int j = 0; j < i; j++)
+            {
+                if (req_list[i] == req_list[j])
+                {
+                    cout << "Duplicate request. Please enter a unique request." << endl;
+                    is_duplicate = true;
+                    break;
+                }
+            }
+        } while (req_list[i] < 0 || req_list[i] >= DISK_SIZE || is_duplicate);
+    }
+    C_SCAN(req_list, req_fetched_seq, direction, REQ_SIZE, DISK_SIZE, HEAD);
+
+    delete[] req_list;
+    delete[] req_fetched_seq;
 
     return 0;
 }
