@@ -226,7 +226,17 @@ int main()
 
     int *req_list = new int[REQ_SIZE];
     int *req_fetched_seq = new int[REQ_SIZE];
-    int direction = 1; // 1 for right, 0 for left
+    int direction; // 1 for right, 0 for left
+
+    do
+    {
+        cout << "Enter the direction of the disk head movement (1 for right, 0 for left): ";
+        cin >> direction;
+        if (direction != 0 && direction != 1)
+        {
+            cout << "Invalid direction. Please enter 1 for right or 0 for left." << endl;
+        }
+    } while (direction != 0 && direction != 1);
 
     cout << "* Enter the request sequence *" << endl;
     for (int i = 0; i < REQ_SIZE; i++)
