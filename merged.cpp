@@ -219,10 +219,6 @@ void C_SCAN(int req_list[], int direction, const int NUM_OF_REQ, const int DISK_
 
         // Move to the end of the disk and then to the beginning
         int repositioning_time = (DISK_SIZE - 1 - head) + (DISK_SIZE - 1);
-        total_seek_time += repositioning_time;
-
-        if (repositioning_time > worst_seek_time)
-            worst_seek_time = repositioning_time;
         head = 0;
 
         bool flag = false;
@@ -232,6 +228,11 @@ void C_SCAN(int req_list[], int direction, const int NUM_OF_REQ, const int DISK_
             {
                 if (!flag)
                 {
+                    total_seek_time += repositioning_time;
+
+                    if (repositioning_time > worst_seek_time)
+                        worst_seek_time = repositioning_time;
+
                     repositioning_time += req_list[i];
 
                     if (repositioning_time > worst_seek_time)
@@ -277,7 +278,6 @@ void C_SCAN(int req_list[], int direction, const int NUM_OF_REQ, const int DISK_
 
         // Move to the start of the disk and then to the end
         int repositioning_time = head + (DISK_SIZE - 1);
-        total_seek_time += repositioning_time;
         head = DISK_SIZE - 1;
 
         bool flag = false;
@@ -287,6 +287,7 @@ void C_SCAN(int req_list[], int direction, const int NUM_OF_REQ, const int DISK_
             {
                 if (!flag)
                 {
+                    total_seek_time += repositioning_time;
                     repositioning_time += (DISK_SIZE - 1 - req_list[i]);
 
                     if (repositioning_time > worst_seek_time)
