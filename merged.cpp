@@ -13,17 +13,17 @@ using namespace std::chrono;
 
 void insertionSort(int req_list[], const int NUM_OF_REQ)
 {
-    int i, key, j;
+    int i, key, index;
     for (i = 1; i < NUM_OF_REQ; i++)
     {
         key = req_list[i];
-        j = i - 1;
-        while (j >= 0 && req_list[j] > key)
+        index = i - 1;
+        while (index >= 0 && req_list[index] > key)
         {
-            req_list[j + 1] = req_list[j];
-            j = j - 1;
+            req_list[index + 1] = req_list[index];
+            index = index - 1;
         }
-        req_list[j + 1] = key;
+        req_list[index + 1] = key;
     }
 
     cout << "\n* SORTED REQUESTS *\n";
@@ -44,146 +44,166 @@ void insertionSort(int req_list[], const int NUM_OF_REQ)
 
 // SCAN Algorithm
 
-// void SCAN(int req_list[], int direction, const int NUM_OF_REQ, const int DISK_SIZE, const int HEAD)
-// {
-//     int totalMov = 0, mov;
-//     int left = 0, right = 0;
-//     int fetchSeq[queueSize];
-//     int j = 0;
-//     int worst, best;
+void SCAN(int req_list[], int direction, const int NUM_OF_REQ, const int DISK_SIZE, const int HEAD)
+{
+    int head = HEAD;
+    int total_seek_time = 0, seek_time = 0, repositioning_time = 0, worst_seek_time = 0, best_seek_time = INT_MAX, index = 0;
+    int left_seq = 0, right_seq = 0;               // Number of left items & number of right items from the initial head position
+    int *req_processed_list = new int[NUM_OF_REQ]; // Temporary array to store processed requests
 
-//     for (int i = 0; i < queueSize; i++)
-//     {
-//         if (reqQueue[i] < head)
-//         {
-//             left++;
-//         }
-//         if (reqQueue[i] > head)
-//         {
-//             right++;
-//         }
-//     }
+    insertionSort(req_list, NUM_OF_REQ);
 
-//     if (direction == "Right")
-//     {
-//         worst = abs(reqQueue[left] - head);
-//         best = abs(reqQueue[left] - head);
+    for (int i = 0; i < NUM_OF_REQ; i++)
+    {
+        // If item in list is < head, then left item + 1
+        if (req_list[i] < head)
+        {
+            left_seq++;
+        }
+        // If item in list is > head, then right item + 1
+        if (req_list[i] > head)
+        {
+            right_seq++;
+        }
+    }
 
-//         // Move to the right req
-//         for (int i = left; i < queueSize; i++)
-//         {
-//             mov = abs(reqQueue[i] - head);
-//             totalMov = totalMov + mov;
+    // Right direction
+    if (direction == 1)
+    {
 
-//             if (mov > worst)
-//                 worst = mov;
+        // Move to the right requests, start from the first item after the initial head position
+        for (int i = left_seq; i < NUM_OF_REQ; i++)
+        {
+            seek_time = abs(req_list[i] - head);
+            total_seek_time = total_seek_time + seek_time;
 
-//             if (mov < best)
-//                 best = mov;
+            if (seek_time > worst_seek_time)
+                worst_seek_time = seek_time;
 
-//             head = reqQueue[i];
-//             fetchSeq[j] = reqQueue[i];
-//             j++;
-//         }
+            if (seek_time < best_seek_time)
+                best_seek_time = seek_time;
 
-//         if (left > 0)
-//         {
-//             // Then move to the left
-//             mov = abs(totalTracks - 1 - head);
-//             totalMov = totalMov + mov;
-//             head = totalTracks - 1;
+            head = req_list[i]; // Assign the head to the current serviced request
+            req_processed_list[index] = req_list[i];
+            index++;
+        }
 
-//             mov = mov + abs(reqQueue[left - 1] - head);
+        // Check if there are items on the left side of the initial head position
+        if (left_seq > 0)
+        {
+            repositioning_time = abs(DISK_SIZE - 1 - head);                      // From the current serviced request (head) to the end of the disk
+            head = DISK_SIZE - 1;                                                // Assign head to the end of the disk
+            seek_time = repositioning_time + abs(req_list[left_seq - 1] - head); // From the end of the disk (head) to the rightmost of the list of left items
 
-//             if (mov > worst)
-//                 worst = mov;
+            // Move to the left requests, start from the last item before the initial head position
+            for (int i = left_seq - 1; i >= 0; i--)
+            {
+                total_seek_time = total_seek_time + seek_time;
 
-//             if (mov < best)
-//                 best = mov;
+                if (seek_time > worst_seek_time)
+                    worst_seek_time = seek_time;
 
-//             for (int i = left - 1; i >= 0; i--)
-//             {
-//                 totalMov = totalMov + abs(reqQueue[i] - head);
+                if (seek_time < best_seek_time)
+                    best_seek_time = seek_time;
 
-//                 if (mov > worst)
-//                     worst = mov;
+                head = req_list[i]; // Assign the head to the current serviced request
+                req_processed_list[index] = req_list[i];
+                index++;
 
-//                 if (mov < best)
-//                     best = mov;
+                // Check if there are any items before the current serviced request, if there are, then calculate the seek time.
+                if ((i - 1) >= 0)
+                    seek_time = abs(req_list[i - 1] - head);
+            }
+        }
+    }
 
-//                 head = reqQueue[i];
-//                 fetchSeq[j] = reqQueue[i];
-//                 j++;
+    // Left
+    else
+    {
 
-//                 if ((i - 1) > 0)
-//                     mov = abs(reqQueue[i - 1] - head);
-//             }
-//         }
-//     }
+        // Move to the left requests, start from the last item before the initial head position
+        for (int i = left_seq - 1; i >= 0; i--)
+        {
+            total_seek_time = total_seek_time + abs(req_list[i] - head);
+            seek_time = abs(req_list[i] - head);
 
-//     else
-//     {
-//         worst = abs(reqQueue[left - 1] - head);
-//         best = abs(reqQueue[left - 1] - head);
+            if (seek_time > worst_seek_time)
+                worst_seek_time = seek_time;
 
-//         for (int i = left - 1; i >= 0; i--)
-//         {
-//             totalMov = totalMov + abs(reqQueue[i] - head);
-//             mov = abs(reqQueue[i] - head);
+            if (seek_time < best_seek_time)
+                best_seek_time = seek_time;
 
-//             if (mov > worst)
-//                 worst = mov;
+            head = req_list[i]; // Assign the head to the current serviced request
+            req_processed_list[index] = req_list[i];
+            index++;
+        }
 
-//             if (mov < best)
-//                 best = mov;
+        // Check if there are items on the right side of the initial head position
+        if (right_seq > 0)
+        {
+            repositioning_time = abs(head);                                  // From the current serviced request (head) to the end of the disk
+            head = 0;                                                        // Assign head to the end of the disk
+            seek_time = repositioning_time + abs(req_list[left_seq] - head); // From the end of the disk (head) to the leftmost of the list of right items
 
-//             head = reqQueue[i];
-//             fetchSeq[j] = reqQueue[i];
-//             j++;
-//         }
+            // Move to the right requests, start from the first item after the initial head position
+            for (int i = left_seq; i < NUM_OF_REQ; i++)
+            {
+                total_seek_time = total_seek_time + seek_time;
 
-//         if (right > 0)
-//         {
-//             // Then reverse direction and move right
-//             mov = abs(head);
-//             totalMov = totalMov + mov;
-//             head = 0;
+                if (seek_time > worst_seek_time)
+                    worst_seek_time = seek_time;
 
-//             mov = mov + abs(reqQueue[left] - head);
+                if (seek_time < best_seek_time)
+                    best_seek_time = seek_time;
 
-//             // Move to the right req
-//             for (int i = left; i < queueSize; i++)
-//             {
+                head = req_list[i]; // Assign the head to the current serviced request
+                req_processed_list[index] = req_list[i];
+                index++;
 
-//                 totalMov = totalMov + abs(reqQueue[i] - head);
+                // Check if there are any items after the current serviced request, if there are, then calculate the seek time.
+                if ((i + 1) < NUM_OF_REQ)
+                    seek_time = abs(req_list[i + 1] - head);
+            }
+        }
+    }
 
-//                 if (mov > worst)
-//                     worst = mov;
+    // Display configurations
+    cout << "---- SCAN ----" << endl;
+    cout << "\n* CONFIGURATION *" << endl;
+    cout << "Disk size: " << DISK_SIZE << endl;
+    cout << "Head position: " << HEAD << endl;
+    cout << "Request size: " << NUM_OF_REQ << endl;
+    cout << "Direction: " << (direction == 1 ? "right" : "left") << endl;
+    cout << "\n-----------------" << endl;
 
-//                 if (mov < best)
-//                     best = mov;
+    // Display results
+    cout << "\n* RESULTS *" << endl;
+    cout << "Total request fetch: " << NUM_OF_REQ << endl;
+    cout << "Request fetch sequence: [";
 
-//                 head = reqQueue[i];
-//                 fetchSeq[j] = reqQueue[i];
-//                 j++;
+    for (int i = 0; i < NUM_OF_REQ; i++)
+    {
+        cout << req_processed_list[i];
+        if (i != NUM_OF_REQ - 1)
+        {
+            cout << " --> ";
+        }
+    }
 
-//                 if ((i + 1) < queueSize)
-//                     mov = abs(reqQueue[i + 1] - head);
-//             }
-//         }
-//     }
+    cout << "]" << endl;
+    cout << "\n-----------------" << endl;
 
-//     cout << "\nFetch Sequence: ";
-//     for (int i = 0; i < queueSize; i++)
-//     {
-//         cout << fetchSeq[i] << " ";
-//     }
+    cout << "\nTotal seek time / head movements: " << total_seek_time << " units" << endl;
+    cout << "Average seek time / head movements: " << fixed << setprecision(2) << ((double)total_seek_time / NUM_OF_REQ) << " units" << endl;
+    cout << "Worst seek time / head movements: " << worst_seek_time << " units" << endl;
+    cout << "Best seek time / head movements: " << best_seek_time << " units" << endl;
+    cout << "\n-----------------" << endl;
+    cout << "\nTotal seek count: " << NUM_OF_REQ << endl;
+    cout << "Average seek count: " << 1 << endl;
+    cout << "\n-----------------" << endl;
 
-//     cout << "\nTotal seek time / head movements: " << totalMov << endl;
-//     cout << "Average seek time / head movements: " << fixed << setprecision(2) << ((double)totalMov / queueSize) << endl;
-//     cout << "Worst seek time / head movements: " << worst << endl;
-//     cout << "Best seek time / head movements: " << best << endl;
-// }
+    delete[] req_processed_list;
+}
 
 // C-SCAN Algorithm
 
@@ -316,15 +336,15 @@ void C_SCAN(int req_list[], int direction, const int NUM_OF_REQ, const int DISK_
 
     // Display configurations
     cout << "---- C-SCAN ----" << endl;
-    cout << "* CONFIGURATION *" << endl;
+    cout << "\n* CONFIGURATION *" << endl;
     cout << "Disk size: " << DISK_SIZE << endl;
     cout << "Head position: " << HEAD << endl;
     cout << "Request size: " << NUM_OF_REQ << endl;
     cout << "Direction: " << (direction == 1 ? "right" : "left") << endl;
-    cout << "-----------------" << endl;
+    cout << "\n-----------------" << endl;
 
     // Display results
-    cout << "* RESULTS *" << endl;
+    cout << "\n* RESULTS *" << endl;
     cout << "Total request fetch: " << NUM_OF_REQ << endl;
     cout << "Request fetch sequence: [";
 
@@ -338,15 +358,15 @@ void C_SCAN(int req_list[], int direction, const int NUM_OF_REQ, const int DISK_
     }
 
     cout << "]" << endl;
-    cout << "-----------------" << endl;
-    cout << "Total seek time / head movements: " << total_seek_time << " units" << endl;
+    cout << "\n-----------------" << endl;
+    cout << "\nTotal seek time / head movements: " << total_seek_time << " units" << endl;
     cout << "Average seek time / head movements: " << avg_seek_time << " units" << endl;
     cout << "Worst seek time / head movements: " << worst_seek_time << " units" << endl;
     cout << "Best seek time / head movements: " << best_seek_time << " units" << endl;
-    cout << "-----------------" << endl;
-    cout << "Total seek count: " << NUM_OF_REQ << endl;
+    cout << "\n-----------------" << endl;
+    cout << "\nTotal seek count: " << NUM_OF_REQ << endl;
     cout << "Average seek count: " << 1 << endl;
-    cout << "-----------------" << endl;
+    cout << "\n-----------------" << endl;
 
     delete[] req_processed_list;
 }
@@ -406,7 +426,7 @@ int main()
 
     } while (direction != 0 && direction != 1);
 
-    cout << "* Enter the request sequence *" << endl;
+    cout << "\n* Enter the request sequence *" << endl;
 
     for (int i = 0; i < NUM_OF_REQ; i++)
     {
@@ -423,9 +443,9 @@ int main()
                 cout << "\n[Invalid request. Please enter a request within the disk's range.]\n\n";
             }
 
-            for (int j = 0; j < i; j++)
+            for (int index = 0; index < i; index++)
             {
-                if (req_list[i] == req_list[j])
+                if (req_list[i] == req_list[index])
                 {
                     cout << "\n[Duplicate request. Please enter a unique request.]\n\n";
                     is_duplicate = true;
@@ -436,6 +456,8 @@ int main()
         } while (req_list[i] < 0 || req_list[i] >= DISK_SIZE || is_duplicate);
     }
 
+    SCAN(req_list, direction, NUM_OF_REQ, DISK_SIZE, HEAD);
+    cout << endl;
     C_SCAN(req_list, direction, NUM_OF_REQ, DISK_SIZE, HEAD);
 
     delete[] req_list;
